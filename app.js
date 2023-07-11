@@ -13,15 +13,36 @@ const aboutContent = " As an aspiring computer scientist, I have always been pas
 const contactContent = "PERSONAL";
 const posts = []
 const app = express();
+const mongoose = require('mongoose');
+
+
 
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
+main().catch(err => console.log(err));
+
+async function main() {
+  await mongoose.connect('mongodb+srv://nareshmahesh910:Naresh%402001@cluster0.8atztpy.mongodb.net/blogPosts');
+}
+const { Schema } = mongoose;
+
+const blogSchema = new Schema({
+  title: String,
+  post: String,
+});
+
+const Blog = mongoose.model('Blog', blogSchema);
+
 
 app.get('/', (req,res)=>{
-  res.render('home', {startingContent : homeStartingContent , posts : posts });
+  Blog.find().then((items)=>{
+    console.log(items)
+    res.render('home', {startingContent : homeStartingContent , posts : items });
+  })
+  
 })
 
 app.get('/about', (req,res)=>{
@@ -39,25 +60,30 @@ app.get('/compose' , (req,res)=>{
 app.post('/compose', (req,res)=>{
   let title1 = req.body.blog;
   let content1 = req.body.post;
-  const info = {
+  const post = new Blog( {
      title : title1 ,
-     content : content1
-  }
-  posts.push(info);
+     post : content1
+  })
+  post.save()
+
   res.redirect('/')
+  
 })
 
-app.get('/posts/:post' , (req,res)=>{
-  const p = _.lowerCase(req.params.post)
+app.get('/posts/:postId' , (req,res)=>{
+  const p = req.params.postId
    const l = posts.length;
-   for(var i=0;i<l;i++)
-   {
-    const x= _.lowerCase(posts[i].title)
-      if( p === x)
-        {
-          res.render('post',{title : posts[i].title , content : posts[i].content})
-        }
-    }
+   Blog.findOne({_id:p}).then(( post) =>{
+
+    res.render("post", {
+ 
+      title: post.title,
+ 
+      content: post.post
+ 
+    });
+ 
+  });
   })
 
 
